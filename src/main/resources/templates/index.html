@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>JJ小说爬虫</title>
+    <link th:href="@{/layui/css/layui.css}" rel="stylesheet"/>
+    <script th:src="@{/layui/layui.js}"></script>
+</head>
+<body class="layui-layout-body">
+<div class="layui-layout layui-layout-admin">
+    <div class="layui-header">
+        <div class="layui-logo">小说爬虫系统</div>
+        <!-- 头部区域（可配合layui已有的水平导航） -->
+        <ul class="layui-nav layui-layout-left">
+            <!--<li class="layui-nav-item"><a href="">控制台</a></li>-->
+        </ul>
+    </div>
+    <div class="layui-side layui-bg-black">
+        <div class="layui-side-scroll">
+            <!-- 左侧导航区域（可配合layui已有的垂直导航） -->
+            <ul class="layui-nav layui-nav-tree" lay-filter="test">
+                <li class="layui-nav-item layui-nav-itemed">
+                    <a class="" href="javascript:;">小说管理</a>
+                    <dl class="layui-nav-child">
+                        <dd><a th:href="@{5200}" target="main_self_frame">5200小说网(https://m.5200.net)</a></dd>
+                        <dd><a href="javascript:;">列表二</a></dd>
+                        <dd><a href="javascript:;">列表三</a></dd>
+                    </dl>
+                </li>
+                <li class="layui-nav-item">
+                    <a href="javascript:;">其它</a>
+                    <dl class="layui-nav-child">
+                        <dd><a href="javascript:;">格式转化</a></dd>
+                    </dl>
+                </li>
+            </ul>
+        </div>
+    </div>
+
+    <div class="layui-body">
+        <!-- 内容主体区域 -->
+        <iframe src="" name="main_self_frame" frameborder="0" style="width: 100%" ; height="100%" class="layadmin-iframe"></iframe>
+    </div>
+
+    <script>
+        layui.use('element', function () {
+            var element = layui.element;
+        });
+    </script>
+</div>
+</body>
+</html>
