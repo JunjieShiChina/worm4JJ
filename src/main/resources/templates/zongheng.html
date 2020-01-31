@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>5200小说网</title>
+    <link th:href="@{/layui/css/layui.css}" rel="stylesheet"/>
+    <script th:src="@{/layui/layui.js}"></script>
+</head>
+<body class="layui-layout-body">
+<div class="layui-container">
+    <div class="layui-show" style="margin-left: 30%; margin-top: 10%">
+        <div class="layui-inline">
+            <input type="text" id="bookName" required lay-verify="required" placeholder="小说名称" autocomplete="off"
+                   class="layui-input">
+        </div>
+        <button class="layui-btn" lay-submit lay-filter="formDemo" id="searchBtn" data-type="reload">搜索</button>
+    </div>
+
+    <table class="layui-hide" id="LAY_table_books" lay-filter="bookTable"></table>
+
+    <script type="text/html" id="barDemo">
+        <a class="layui-btn layui-btn-primary layui-btn-xs" lay-event="chapters">目录</a>
+        <a class="layui-btn layui-btn-danger layui-btn-xs" lay-event="lineRead">在线阅读</a>
+        <a class="layui-btn layui-btn-xs" lay-event="downloadTxt">下载txt</a>
+    </script>
+</div>
+</body>
+<script>
+    layui.use('table', function () {
+        var table = layui.table;
+
+        //监听工具条
+        table.on('tool(bookTable)', function (obj) {
+            var data = obj.data;
+            if (obj.event === 'chapters') {
+                $.ajax({
+                    url: '/zongheng/listChapters',
+                    type: 'GET',
+                    data: {link:data.link},
+                    contentType: 'application/json',
+                    beforeSend: function () {
+                        layer.msg('正在爬取目录，请耐心等待...', {
+                            icon: 16,
+                            shade: 0.01,
+                            time: 0
+                        })
+                    },
+                    success: function (result) {
+                        var resultData = result.data;
+                        var content = '';
+                        $.each(resultData,function(i,chapterName){
+                            content = content + chapterName + '<br/>';
+                        });
+                        layer.close(layer.msg());
+                        layer.open({
+                            type: 1,
+                            anim: 0,
+                            title: data.bookName + ' 目录',
+                            area: ['35%', '58%'],
+                            btn: ['关闭'],
+                            content: content
+                        });
+                    },
+                    error: function () {
+                        layer.close(layer.msg());
+                        layer.alert("目录爬取失败")
+                    }
+                });
+            } else if (obj.event === 'downloadTxt') {
+                window.location.href='/5200/downloadTxt?bookName=' + data.bookName + '&link=' + data.link;
+            } else if (obj.event === 'lineRead') {
+                window.location.href='/5200/lineRead?link=' + data.link;
+            }
+        });
+
+        //方法级渲染
+        table.render({
+            elem: '#LAY_table_books'
+            , url: '/zongheng/search'
+            , method: 'post'
+            , contentType: 'application/json'
+            , cellMinWidth: 80
+            , cols: [
+                [
+                    {field: 'bookName', title: '书名', width: 200},
+                    {field: 'author', title: '作者', width: 200},
+                    {field: 'bookStatus', title: '状态', width: 200},
+                    {field: 'totalWordNumber', title: '字数', width: 200},
+                    {fixed: 'right', title: '操作', align: 'center', toolbar: '#barDemo'}
+                ]
+            ]
+            , id: 'bookReload'
+            , page: false
+            , height: 600
+        });
+
+        var $ = layui.$, active = {
+            reload: function () {
+                var bookName = $('#bookName');
+
+                //执行重载
+                table.reload('bookReload', {
+                    where: {
+                        bookName: bookName.val()
+                    }
+                }, 'data');
+            }
+        };
+
+        $('.layui-container .layui-show .layui-btn').on('click', function () {
+            var type = $(this).data('type');
+            active[type] ? active[type].call(this) : '';
+        });
+    });
+</script>
+</html>

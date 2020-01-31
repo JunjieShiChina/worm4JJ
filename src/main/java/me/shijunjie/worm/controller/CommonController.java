@@ -14,4 +14,9 @@ public class CommonController {
     public String to5200() {
         return "5200";
     }
+
+    @RequestMapping("/zongheng")
+    public String toZongHeng() {
+        return "zongheng";
+    }
 }
