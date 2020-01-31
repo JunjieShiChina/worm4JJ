@@ -20,7 +20,7 @@ public class JSoupUtils {
                     throw new RuntimeException("连接失败：" + e.getMessage());
                 }
                 try {
-                    TimeUnit.MILLISECONDS.sleep(100);
+                    TimeUnit.MILLISECONDS.sleep(1000);
                 } catch (InterruptedException ex) {
                 }
             }
