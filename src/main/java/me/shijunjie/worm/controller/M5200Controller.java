@@ -62,8 +62,34 @@ public class M5200Controller {
     @GetMapping("/lineRead")
     public String lineRead(String link, Map<String,String> map) {
         Map<String, String> resultMap = m5200Service.getContentHtml(link);
-        map.put("title", resultMap.get("title"));
         map.put("contentHtml", resultMap.get("contentHtml"));
+        String prevLink = "/5200/readContent?link="+resultMap.get("prevLink");
+        String nextLink = "/5200/readContent?link="+resultMap.get("nextLink");
+        if(!prevLink.endsWith("html")) {
+            prevLink = "#";
+        }
+        if(!nextLink.endsWith("html")) {
+            nextLink = "#";
+        }
+        map.put("prevLink", prevLink);
+        map.put("nextLink", nextLink);
+        return "content";
+    }
+
+    @GetMapping("/readContent")
+    public String readContent(String link, Map<String,String> map) {
+        Map<String, String> resultMap = m5200Service.readContent(link);
+        map.put("contentHtml", resultMap.get("contentHtml"));
+        String prevLink = "/5200/readContent?link="+resultMap.get("prevLink");
+        String nextLink = "/5200/readContent?link="+resultMap.get("nextLink");
+        if(!prevLink.endsWith("html")) {
+            prevLink = "#";
+        }
+        if(!nextLink.endsWith("html")) {
+            nextLink = "#";
+        }
+        map.put("prevLink", prevLink);
+        map.put("nextLink", nextLink);
         return "content";
     }
 

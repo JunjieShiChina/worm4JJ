@@ -82,23 +82,44 @@ public class M5200ServiceImpl implements M5200Service {
             doc = Jsoup.connect(url).header("Sec-Fetch-Mode", "cors").timeout(4000).userAgent("Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/77.0.3865.120 Safari/537.36").get();
             String contentLink = doc.getElementsByClass("book_last").get(1).getElementsByTag("dd").get(0).getElementsByTag("a").get(0).attr("href");
             String title = doc.getElementsByTag("title").get(0).text();
-            String content = readContent(contentLink);
+            Map<String, String> contentMap = readContent(contentLink);
             resultMap.put("title", title);
-            resultMap.put("contentHtml", content);
+            resultMap.put("contentHtml", contentMap.get("contentHtml"));
+            resultMap.put("prevLink", contentMap.get("prevLink"));
+            resultMap.put("nextLink", contentMap.get("nextLink"));
         } catch (IOException e) {
             throw new RuntimeException("连接失败：" + e.getMessage());
         }
         return resultMap;
     }
 
-    public String readContent(String link) throws IOException {
+    @Override
+    public Map<String, String> readContent(String link) {
+        Map<String, String> resultMap = new HashMap<>();
         String url = rootUrl + link;
-        Document doc = Jsoup.connect(url).header("Sec-Fetch-Mode", "cors").timeout(4000).userAgent("Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/77.0.3865.120 Safari/537.36").get();
+        Document doc = null;
+        try {
+            doc = Jsoup.connect(url).header("Sec-Fetch-Mode", "cors").timeout(4000).userAgent("Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/77.0.3865.120 Safari/537.36").get();
+        } catch (IOException e) {
+            throw new RuntimeException("连接失败：" + e.getMessage());
+        }
         String innerHtml = doc.getElementById("chaptercontent").html();
-        return innerHtml;
+        String prevLink = doc.getElementById("pb_prev").attr("href");
+        String nextLink = doc.getElementById("pb_next").attr("href");
+        resultMap.put("contentHtml", innerHtml);
+        resultMap.put("prevLink", prevLink);
+        resultMap.put("nextLink", nextLink);
+        return resultMap;
     }
 
     private void curPageChapters(String link, String nextLink, List<String> chapters) throws IOException {
+        nextLink = readChapters(nextLink, chapters);
+        while(!StringUtils.isEmpty(nextLink) && !link.equals(nextLink)) {
+            nextLink = readChapters(nextLink, chapters);
+        }
+    }
+
+    private String readChapters(String nextLink, List<String> chapters) throws IOException {
         String url = rootUrl + nextLink;
         Document doc = Jsoup.connect(url).header("Sec-Fetch-Mode", "cors").timeout(4000).userAgent("Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/77.0.3865.120 Safari/537.36").get();
         Elements chapterElements = doc.getElementsByClass("book_last").get(1).getElementsByTag("dd");
@@ -106,12 +127,17 @@ public class M5200ServiceImpl implements M5200Service {
             chapters.add(chapterElements.get(index).text());
         }
         nextLink = doc.getElementsByClass("right").get(0).getElementsByTag("a").get(0).attr("href");
-        if(!StringUtils.isEmpty(nextLink) && !link.equals(nextLink)) {
-            curPageChapters(link, nextLink, chapters);
-        }
+        return nextLink;
     }
 
     private void getText(String chapterUrl, BufferedOutputStream buffer, String link) throws IOException {
+        String nextUrl = writeTxt(chapterUrl, buffer);
+        while(!(rootUrl+link).equals(nextUrl)) {
+            nextUrl = writeTxt(nextUrl, buffer);
+        }
+    }
+
+    private String writeTxt(String chapterUrl, BufferedOutputStream buffer) throws IOException {
         Document doc = Jsoup.connect(chapterUrl).header("Sec-Fetch-Mode", "cors").timeout(4000).userAgent("Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/77.0.3865.120 Safari/537.36").get();
         String nextLink = doc.getElementsByClass("Readpage_down js_page_down").get(0).attr("href");
         String nextUrl = rootUrl + nextLink;
@@ -119,9 +145,7 @@ public class M5200ServiceImpl implements M5200Service {
         String innerText = innerHtml.replaceAll("<br>", "") + "\n\n\n\n";
         buffer.write(innerText.getBytes("UTF-8"));
         buffer.flush();
-        if(!link.equals(nextLink)) {
-            getText(nextUrl, buffer, link);
-        }
+        return nextUrl;
     }
 
 
